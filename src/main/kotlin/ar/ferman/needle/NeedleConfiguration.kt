@@ -1,5 +1,11 @@
 package ar.ferman.needle
 
+open class NeedleConfiguration(initializer: NeedleConfigurator.() -> Unit) {
+    init {
+        initializer.invoke(NeedleConfigurator(Needle))
+    }
+}
+
 @DslMarker
 annotation class NeedleDsl
 
@@ -13,6 +19,19 @@ class NeedleConfigurator(private val needle: Needle) {
         needle.prototype(name, beanCreator)
     }
 
+
+    inline fun <reified T : Any> singleton(noinline beanCreator: BeanCreator<T>) {
+        val name = T::class.java.simpleName.decapitalize()
+        singleton(name, beanCreator)
+    }
+
+
+    inline fun <reified T : Any> prototype(noinline beanCreator: BeanCreator<T>) {
+        val name = T::class.java.simpleName.decapitalize()
+        prototype(name, beanCreator)
+    }
+
+
     fun on(condition: ConditionConfigurator.() -> Unit): ConditionalContext {
         val conditionConfigurator = ConditionConfigurator()
         condition.invoke(conditionConfigurator)
@@ -21,12 +40,14 @@ class NeedleConfigurator(private val needle: Needle) {
     }
 }
 
+typealias NeedleCondition = () -> Boolean
+
 @NeedleDsl
 class ConditionConfigurator {
     lateinit var condition: NeedleCondition
 
-    fun activeProfile(name: String){
-        this.condition = ProfileCondition(name)
+    fun condition(condition: NeedleCondition){
+        this.condition = condition
     }
 
 }
@@ -34,7 +55,7 @@ class ConditionConfigurator {
 @NeedleDsl
 class ConditionalContext(private val needle: Needle, private val condition: NeedleCondition) {
     infix fun define(context: NeedleConfigurator.() -> Unit) {
-        if(condition()) {
+        if (condition()) {
             context.invoke(NeedleConfigurator(needle))
         }
     }

@@ -1,26 +1,36 @@
 package ar.ferman.needle
 
-typealias NeedleCondition = () -> Boolean
+typealias Profile = String
 
-//class ConditionalNeedleInitialization {
-//
-//    private val initializerByProfile = mutableMapOf<String, Needle.() -> Unit>()
-//
-//    fun on(condition: NeedleCondition, initializer: Needle.() -> Unit) {
-//        if (condition()) {
-//            initializer.invoke(Needle)
-//        }
-//    }
-//}
+private object NeedleProfiles {
+    private var activeProfiles = setOf<Profile>()
 
-//fun NeedleConfigurator.on(condition: NeedleCondition, initializer: Needle.() -> Unit) {
-//    if (condition()) {
-//        initializer.invoke(this.needle)
-//    }
-//}
+    fun isActive(profile: Profile): Boolean {
+        return profile in activeProfiles
+    }
 
-class ProfileCondition(private val name: String) : NeedleCondition{
-    override fun invoke(): Boolean {
-        return Profile.current == name
+    fun activate(vararg profiles: Profile) {
+        activeProfiles = activeProfiles + profiles.toSet()
     }
 }
+
+fun Needle.activateProfiles(vararg profiles: Profile): Needle {
+    if (initialized) throw CannotActivateProfile("Needle was previously initialized")
+
+    NeedleProfiles.activate(*profiles)
+
+    return this
+}
+
+fun ConditionConfigurator.activeProfile(name: String) {
+    this.condition = ProfileCondition(name)
+}
+
+class ProfileCondition(private val profile: Profile) : NeedleCondition {
+
+    override fun invoke(): Boolean {
+        return NeedleProfiles.isActive(profile)
+    }
+}
+
+class CannotActivateProfile(message: String) : RuntimeException(message)
