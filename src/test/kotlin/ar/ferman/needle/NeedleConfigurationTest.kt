@@ -85,6 +85,19 @@ class NeedleConfigurationTest {
     }
 
     @Test
+    fun `get registered bean with dependencies (short syntax)`() {
+        Needle.init {
+            singleton<Action>("myAction")
+            singleton<Service>("myService")
+            singleton<Repository>("myRepository")
+        }
+
+        whenGetBean(name = "myAction")
+
+        then(bean).isInstanceOf(Action::class.java)
+    }
+
+    @Test
     fun `fail when get bean with missing dependency`() {
         Needle.init(NeedleConfiguration {
             singleton("myService") {
@@ -143,5 +156,4 @@ class NeedleConfigurationTest {
     class Repository
     class OtherRepository
     class RepositoryDependingOnService(myService: Service)
-
 }

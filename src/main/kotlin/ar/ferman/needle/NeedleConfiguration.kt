@@ -19,6 +19,13 @@ class NeedleConfigurator(private val needle: Needle) {
         needle.prototype(name, beanCreator)
     }
 
+    inline fun <reified T : Any> singleton(name: String) {
+        singleton(name) { create<T>() }
+    }
+
+    inline fun <reified T : Any> prototype(name: String) {
+        prototype(name) { create<T>() }
+    }
 
     inline fun <reified T : Any> singleton(noinline beanCreator: BeanCreator<T>) {
         val name = T::class.java.simpleName.decapitalize()

@@ -70,7 +70,11 @@ object Needle {
     fun init(vararg configurations: NeedleConfiguration) {
         initialized = true
         println("${configurations.size} initialized")
+    }
 
+    fun init(initializer: NeedleConfigurator.() -> Unit){
+        initializer.invoke(NeedleConfigurator(this))
+        initialized = true
     }
 
     fun stop() {
