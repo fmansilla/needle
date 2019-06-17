@@ -1,5 +1,7 @@
 package ar.ferman.needle
 
+import ar.ferman.needle.Needle.NeedleException
+
 typealias Profile = String
 
 private object NeedleProfiles {
@@ -33,4 +35,4 @@ class ProfileCondition(private val profile: Profile) : NeedleCondition {
     }
 }
 
-class CannotActivateProfile(message: String) : RuntimeException(message)
+class CannotActivateProfile(message: String) : NeedleException(message)

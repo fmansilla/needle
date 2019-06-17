@@ -72,7 +72,7 @@ object Needle {
         println("${configurations.size} initialized")
     }
 
-    fun init(initializer: NeedleConfigurator.() -> Unit){
+    fun init(initializer: NeedleConfigurator.() -> Unit) {
         initializer.invoke(NeedleConfigurator(this))
         initialized = true
     }
@@ -93,7 +93,7 @@ object Needle {
     }
 
     private fun checkInitialization() {
-        if (!initialized) throw RuntimeException("Needle is not initialized")
+        if (!initialized) throw NeedleException("Needle is not initialized")
     }
 
     private class SingletonBeanCreator<T : Any>(name: String, creator: BeanCreator<T>) : BeanCreator<T> {
@@ -107,14 +107,23 @@ object Needle {
         override fun invoke(): T = cached
     }
 
-    class BeanNotFoundException(msg: String) : RuntimeException(msg)
+    open class NeedleException(msg: String, cause: Throwable?) : RuntimeException(msg, cause) {
+        constructor(msg: String): this(msg, null)
+    }
 
-    class InvalidBeanTypeException(msg: String) : RuntimeException(msg)
 
-    class DuplicatedBeanException(msg: String) : RuntimeException(msg)
+    open class BeanCreationException(msg: String, cause: Throwable?) : NeedleException(msg, cause) {
+        constructor(msg: String) : this(msg, null)
+    }
 
     class CyclicDependencyException(val dependencies: List<String> = emptyList()) :
-        RuntimeException(dependencies.joinToString(separator = " -> ", prefix = "[", postfix = "]"))
+        BeanCreationException(dependencies.joinToString(separator = " -> ", prefix = "[", postfix = "]"))
+
+    class BeanNotFoundException(msg: String) : NeedleException(msg)
+
+    class InvalidBeanTypeException(msg: String) : NeedleException(msg)
+
+    class DuplicatedBeanException(msg: String) : NeedleException(msg)
 }
 
 fun <T : Any> needle(name: String): NeedleBeanProperty<T> {

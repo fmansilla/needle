@@ -1,5 +1,8 @@
 package ar.ferman.needle
 
+import ar.ferman.needle.Needle.BeanCreationException
+import ar.ferman.needle.Needle.CyclicDependencyException
+import ar.ferman.needle.Needle.NeedleException
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -17,7 +20,7 @@ inline fun <reified C : Any> create(args: Map<String, Any>): C {
             val expectedType = it.type.classifier as KClass<*>
             val beanParam = args[it.name]
             if (!beanParam!!::class.isSubclassOf(expectedType)) {
-                throw RuntimeException("Expecting bean named[${it.name}] of type $expectedType, but found was ${beanParam::class}")
+                throw BeanCreationException("Expecting bean named[${it.name}] of type $expectedType, but found was ${beanParam::class}")
             }
 
             if (it.name in args) put(it, beanParam)
@@ -27,7 +30,7 @@ inline fun <reified C : Any> create(args: Map<String, Any>): C {
 }
 
 inline fun <reified C : Any> create(): C = try {
-    val constructor = C::class.primaryConstructor ?: throw RuntimeException("Missing primary constructor")
+    val constructor = C::class.primaryConstructor ?: throw BeanCreationException("Missing primary constructor")
     val parameters = constructor.parameters
 
     if (constructor.isBeanMapBasedConstructor()) {
@@ -35,10 +38,10 @@ inline fun <reified C : Any> create(): C = try {
     } else {
         constructor.callBy(parameters.toMapOfBeansByNeedle())
     }
-}catch (e: Needle.CyclicDependencyException){
-    throw Needle.CyclicDependencyException( e.dependencies + C::class.simpleName!!)
-} catch (e: RuntimeException) {
-    throw RuntimeException("Cannot create bean type [${C::class}]", e)
+} catch (e: CyclicDependencyException) {
+    throw CyclicDependencyException(e.dependencies + C::class.simpleName!!)
+} catch (e: NeedleException) {
+    throw BeanCreationException("Cannot create bean type [${C::class}]", e)
 }
 
 fun List<KParameter>.toMapOfBeansByNeedle(): Map<KParameter, Any?> {
