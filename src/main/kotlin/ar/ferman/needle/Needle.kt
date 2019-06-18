@@ -1,12 +1,14 @@
 package ar.ferman.needle
 
 import ar.ferman.needle.Needle.Beans.register
+import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 typealias BeanCreator<T> = () -> T
 
 object Needle {
+    private val logger = LoggerFactory.getLogger(Needle::class.java)
 
     object Beans : AbstractMap<String, Any>() {
         private var beanCreators: MutableMap<String, BeanCreator<*>> = mutableMapOf()
@@ -69,7 +71,7 @@ object Needle {
 
     fun init(vararg configurations: NeedleConfiguration) {
         initialized = true
-        println("${configurations.size} initialized")
+        logger.debug("${configurations.size} initialized")
     }
 
     fun init(initializer: NeedleConfigurator.() -> Unit) {
@@ -83,12 +85,12 @@ object Needle {
     }
 
     internal fun <T : Any> prototype(name: String, beanCreator: BeanCreator<T>) {
-        println("Registering prototype: $name")
+        logger.debug("Registering prototype: $name")
         register(name, beanCreator)
     }
 
     internal fun <T : Any> singleton(name: String, beanCreator: BeanCreator<T>) {
-        println("Registering singleton: $name")
+        logger.debug("Registering singleton: $name")
         register(name, SingletonBeanCreator(name, beanCreator))
     }
 
@@ -108,7 +110,7 @@ object Needle {
     }
 
     open class NeedleException(msg: String, cause: Throwable?) : RuntimeException(msg, cause) {
-        constructor(msg: String): this(msg, null)
+        constructor(msg: String) : this(msg, null)
     }
 
 
